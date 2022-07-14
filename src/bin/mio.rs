@@ -1,7 +1,6 @@
 use mio::net::{TcpListener, TcpStream};
 use mio::Interest;
 use mio::{Events, Poll, Token};
-use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 

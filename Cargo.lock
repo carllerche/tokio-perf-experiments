@@ -231,7 +231,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tokio-perf"
+name = "tokio-perf-experiments"
 version = "0.1.0"
 dependencies = [
  "futures",

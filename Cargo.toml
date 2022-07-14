@@ -1,5 +1,5 @@
 [package]
-name = "tokio-perf"
+name = "tokio-perf-experiments"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 mio = { version = "0.8", features = ["os-poll", "net"] }
 futures = "0.3"
-tokio = { version = "1", features = ["io-util", "rt", "net", "macros"] }
+tokio = { version = "1.20", features = ["io-util", "rt", "net", "macros"] }
 
 [patch.crates-io]
 tokio = { path = "/home/carllerche/Code/tokio/tokio" }
