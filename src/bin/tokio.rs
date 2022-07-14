@@ -1,4 +1,3 @@
-use std::io;
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpListener;
@@ -18,17 +17,14 @@ async fn process_socket(mut socket: TcpStream) {
 }
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> io::Result<()> {
+async fn main() {
     tokio::spawn(async {
         let listener = TcpListener::bind("127.0.0.1:9000").await.unwrap();
 
         loop {
             let (socket, _) = listener.accept().await.unwrap();
             socket.set_nodelay(true).unwrap();
-            process_socket(socket).await;
-            // tokio::spawn(process_socket(socket));
+            tokio::spawn(process_socket(socket));
         }
-    });
-
-    futures::future::pending().await
+    }).await.unwrap();
 }
