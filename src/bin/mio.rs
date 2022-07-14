@@ -44,7 +44,9 @@ fn main() {
                     }
                 },
                 token if event.is_readable() => {
-                    if process(&mut sockets[token.0], &mut buffer[..]) {
+                    if event.is_read_closed() {
+                        sockets.remove(token.0);
+                    } else if process(&mut sockets[token.0], &mut buffer[..]) {
                         sockets.remove(token.0);
                     }
                 }
