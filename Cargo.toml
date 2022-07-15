@@ -5,6 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.dev]
+panic = 'abort'
+
 [profile.release]
 lto = true
 
@@ -13,6 +16,5 @@ mio = { version = "0.8", features = ["os-poll", "net"] }
 slab = "0.4"
 libc = "0.2"
 tokio = { version = "1.20", features = ["io-util", "rt", "net", "macros"] }
-
-[patch.crates-io]
-tokio = { path = "/home/carllerche/Code/tokio/tokio" }
+socket2 = "0.4.4"
+io-uring = { version = "0.5.2", features = ["unstable"] }

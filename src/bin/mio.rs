@@ -27,7 +27,6 @@ fn main() {
                 Token(1024) => loop {
                     match listener.accept() {
                         Ok((mut socket, _)) => {
-
                             socket.set_nodelay(true).unwrap();
 
                             let entry = sockets.vacant_entry();
@@ -73,7 +72,14 @@ fn process(socket: &mut TcpStream, buffer: &mut [u8]) -> bool {
         }
     }
 
-    let n = unsafe { libc::send(socket.as_raw_fd(), RESP.as_ptr() as _, RESP.len(), libc::MSG_NOSIGNAL) } as usize;
+    let n = unsafe {
+        libc::send(
+            socket.as_raw_fd(),
+            RESP.as_ptr() as _,
+            RESP.len(),
+            libc::MSG_NOSIGNAL,
+        )
+    } as usize;
 
     assert_eq!(n, RESP.len());
     false

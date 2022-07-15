@@ -19,12 +19,14 @@ async fn process_socket(mut socket: TcpStream) {
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     tokio::spawn(async {
-        let listener = TcpListener::bind("127.0.0.1:9000").await.unwrap();
+        let listener = TcpListener::bind("[::1]:9000").await.unwrap();
 
         loop {
             let (socket, _) = listener.accept().await.unwrap();
             socket.set_nodelay(true).unwrap();
             tokio::spawn(process_socket(socket));
         }
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 }
