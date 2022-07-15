@@ -8,7 +8,7 @@ use std::os::unix::io::AsRawFd;
 const RESP: &[u8] = b"HTTP/1.1 200 OK\r\nContent-length: 12\r\n\r\nHello world\n";
 
 fn main() {
-    let addr = "127.0.0.1:9000".parse().unwrap();
+    let addr = "[::1]:9000".parse().unwrap();
     let mut listener = TcpListener::bind(addr).unwrap();
 
     let mut poll = Poll::new().unwrap();
@@ -17,7 +17,7 @@ fn main() {
         .unwrap();
 
     let mut sockets = slab::Slab::with_capacity(1024);
-    let mut buffer = vec![0 as u8; 1024 * 128];
+    let mut buffer = vec![0 as u8; 1024 * 512];
 
     let mut events = Events::with_capacity(1024);
     loop {
@@ -45,9 +45,11 @@ fn main() {
                 },
                 token if event.is_readable() => {
                     if event.is_read_closed() {
-                        sockets.remove(token.0);
+                        let mut socket = sockets.remove(token.0);
+                        poll.registry().deregister(&mut socket).unwrap();
                     } else if process(&mut sockets[token.0], &mut buffer[..]) {
-                        sockets.remove(token.0);
+                        let mut socket = sockets.remove(token.0);
+                        poll.registry().deregister(&mut socket).unwrap();
                     }
                 }
                 _ => unreachable!(),
