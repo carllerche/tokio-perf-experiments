@@ -42,6 +42,9 @@ struct AddrPinned {
 }
 
 fn main() {
+    // pin ourself to cpu 0, good for cpu cache and maybe numa
+    affinity::set_thread_affinity([0]).unwrap();
+
     // Create the buffer pool
     let mut bufs = vec![0; BUF_CNT * BUF_LEN];
     assert_eq!(bufs.len(), BUF_CNT * BUF_LEN);
@@ -142,6 +145,10 @@ unsafe fn handle_completions(
             EventKind::Accept => {
                 if c.result() > 0 {
                     let sock = Socket::from_raw_fd(c.result());
+
+                    // set the processor rx queue for this socket to be associated with cpu 0, which we
+                    // are pinned to. good for numa and cpu cache
+                    sock.set_cpu_affinity(0).unwrap();
 
                     let entry = sockets.vacant_entry();
                     submit_recv(&sock, entry.key() as _, submitter, squeue).unwrap();
