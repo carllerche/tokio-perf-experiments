@@ -18,15 +18,25 @@ async fn process_socket(mut socket: TcpStream) {
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
+    // pin ourself to cpu 0, good for cpu cache and maybe numa
+    affinity::set_thread_affinity([0]).unwrap();
+
     tokio::spawn(async {
         let listener = TcpListener::bind("[::1]:9000").await.unwrap();
 
         loop {
             let (socket, _) = listener.accept().await.unwrap();
+
+            let sref = socket2::SockRef::from(&socket);
+
+            // set the processor rx queue for this socket to be associated with cpu 0, which we
+            // are pinned to. good for numa and cpu cache
+            sref.set_cpu_affinity(0).unwrap();
+
             socket.set_nodelay(true).unwrap();
             tokio::spawn(process_socket(socket));
         }
     })
-    .await
-    .unwrap();
+        .await
+        .unwrap();
 }
