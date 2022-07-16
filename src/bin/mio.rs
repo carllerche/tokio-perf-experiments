@@ -1,13 +1,15 @@
 use mio::net::{TcpListener, TcpStream};
 use mio::Interest;
 use mio::{Events, Poll, Token};
-use std::io::{Read, Write};
+use std::io::Read;
 
 use std::os::unix::io::AsRawFd;
 
 const RESP: &[u8] = b"HTTP/1.1 200 OK\r\nContent-length: 12\r\n\r\nHello world\n";
 
 fn main() {
+    affinity::set_thread_affinity([0]).unwrap();
+
     let addr = "[::1]:9000".parse().unwrap();
     let mut listener = TcpListener::bind(addr).unwrap();
 
@@ -28,6 +30,12 @@ fn main() {
                     match listener.accept() {
                         Ok((mut socket, _)) => {
                             socket.set_nodelay(true).unwrap();
+
+                            let sref = socket2::SockRef::from(&socket);
+
+                            // set the processor rx queue for this socket to be associated with cpu 0, which we
+                            // are pinned to. good for numa and cpu cache
+                            sref.set_cpu_affinity(0).unwrap();
 
                             let entry = sockets.vacant_entry();
                             let token = Token(entry.key());
