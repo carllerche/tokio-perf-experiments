@@ -16,9 +16,10 @@ debug = true
 mio = { version = "0.8", features = ["os-poll", "net"] }
 slab = "0.4"
 libc = "0.2"
-tokio = { version = "1.20", features = ["io-util", "rt", "net", "macros"] }
+tokio = { version = "1.20", features = ["io-util", "rt", "net", "macros", "parking_lot"] }
+# tokio = { version = "1.20", features = ["io-util", "rt", "net", "macros"] }
 socket2 = "0.4.4"
 io-uring = { version = "0.5.2", features = ["unstable"] }
 
 [patch.crates-io]
-# tokio = { path = "/home/carllerche/Code/tokio/tokio" }
+tokio = { path = "/home/ubuntu/tokio/tokio" }
