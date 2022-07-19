@@ -160,6 +160,9 @@ unsafe fn handle_completions(
                     } else {
                         submit_send(&sockets[user_data.id as _], user_data.id, submitter, squeue)
                             .unwrap();
+
+                        // And submit another recv
+                        submit_recv(&sockets[user_data.id as _], user_data.id, submitter, squeue).unwrap();
                     }
 
                     // Add the buffer back
@@ -182,7 +185,7 @@ unsafe fn handle_completions(
                 }
             }
             EventKind::Send => {
-                submit_recv(&sockets[user_data.id as _], user_data.id, submitter, squeue).unwrap();
+                // submit_recv(&sockets[user_data.id as _], user_data.id, submitter, squeue).unwrap();
             }
             EventKind::ProvideBuf => {}
         }
