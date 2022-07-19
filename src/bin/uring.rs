@@ -13,7 +13,7 @@ use socket2::Socket;
 const RESPONSE: &'static [u8] = b"HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello world!\n";
 
 const BACKLOG: c_int = 256;
-const URING_QUEUE_SIZE: u32 = 256;
+const URING_QUEUE_SIZE: u32 = 2048;
 
 // For building the buffer pool
 const BUF_CNT: usize = 128;
@@ -64,13 +64,6 @@ fn main() {
 
     uring.submission();
 
-    let mut counter = 0;
-
-    let user_data = UserData {
-        kind: EventKind::Accept,
-        id: counter,
-    };
-
     let (mut submitter, mut squeue, mut completions) = uring.split();
 
     // Prepare buffer pool
@@ -85,16 +78,18 @@ fn main() {
     }
 
     for _ in 0..64 {
-        unsafe { submit_accept(&listener, &mut submitter, &mut squeue, user_data).unwrap() }
+        let addr = Box::new(AddrPinned {
+            addr: UnsafeCell::new(MaybeUninit::uninit()),
+            len: UnsafeCell::new(MaybeUninit::uninit()),
+        });
 
-        counter += 1;
+        unsafe { submit_accept(&listener, &mut submitter, &mut squeue, addr).unwrap() }
     }
 
     loop {
         unsafe {
             handle_completions(
                 &listener,
-                &mut counter,
                 &mut submitter,
                 &mut squeue,
                 &mut completions,
@@ -124,7 +119,6 @@ unsafe fn add_all_bufs(
 
 unsafe fn handle_completions(
     listener: &socket2::Socket,
-    counter: &mut u32,
     submitter: &mut Submitter,
     squeue: &mut SubmissionQueue,
     completions: &mut CompletionQueue,
@@ -143,8 +137,11 @@ unsafe fn handle_completions(
                 if c.result() > 0 {
                     let sock = Socket::from_raw_fd(c.result());
 
+                    let addr = Box::from_raw(user_data.id as _);
+
                     let entry = sockets.vacant_entry();
                     submit_recv(&sock, entry.key() as _, submitter, squeue).unwrap();
+                    submit_accept(&listener, submitter, squeue, addr).unwrap();
                     entry.insert(sock);
                 }
             }
@@ -198,20 +195,19 @@ unsafe fn submit_accept(
     listener: &socket2::Socket,
     submitter: &mut Submitter,
     squeue: &mut SubmissionQueue,
-    data: UserData,
+    // data: UserData,
+    addr: Box<AddrPinned>,
 ) -> io::Result<()> {
-    let addr = Box::new(AddrPinned {
-        addr: UnsafeCell::new(MaybeUninit::uninit()),
-        len: UnsafeCell::new(MaybeUninit::uninit()),
-    });
-
     let entry = opcode::Accept::new(
         Fd(listener.as_raw_fd()),
         addr.addr.get() as _,
         addr.len.get() as _,
     )
     .build()
-    .user_data(mem::transmute(data));
+    .user_data(mem::transmute(UserData {
+        kind: EventKind::Accept,
+        id: addr.addr.get() as _,
+    }));
 
     mem::forget(addr);
 
