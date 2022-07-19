@@ -110,7 +110,8 @@ unsafe fn add_all_bufs(
             .build();
 
     while squeue.push(&entry).is_err() {
-        submitter.submit().unwrap();
+        // submitter.submit().unwrap();
+        panic!();
     }
 
     squeue.sync();
@@ -165,7 +166,8 @@ unsafe fn handle_completions(
                     }));
 
                     while squeue.push(&entry).is_err() {
-                        submitter.submit().unwrap();
+                        // submitter.submit().unwrap();
+                        panic!();
                     }
 
                     if c.result() <= 0 {
@@ -212,7 +214,8 @@ unsafe fn submit_accept(
     mem::forget(addr);
 
     while squeue.push(&entry).is_err() {
-        submitter.submit().unwrap();
+        // submitter.submit().unwrap();
+        panic!();
     }
 
     squeue.sync();
@@ -236,6 +239,7 @@ unsafe fn submit_recv(
 
     while squeue.push(&entry).is_err() {
         sub.submit().unwrap();
+        panic!();
     }
 
     Ok(())
@@ -261,7 +265,8 @@ unsafe fn submit_send(
     .user_data(mem::transmute(user_data));
 
     while squeue.push(&entry).is_err() {
-        submitter.submit().unwrap();
+        panic!();
+        // submitter.submit().unwrap();
     }
 
     Ok(())
