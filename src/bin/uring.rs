@@ -153,18 +153,6 @@ unsafe fn handle_completions(
                     let pos = bid as usize * BUF_LEN;
                     let buffer = &buf[pos..(pos + BUF_LEN)];
 
-                    if c.result() <= 0 {
-                        // submit_close(&sockets[user_data.id as _], user_data.id, submitter, squeue).unwrap();
-                        let sock = sockets.remove(user_data.id as _);
-                        libc::close(sock.as_raw_fd());
-                    } else {
-                        submit_send(&sockets[user_data.id as _], user_data.id, submitter, squeue)
-                            .unwrap();
-
-                        // And submit another recv
-                        submit_recv(&sockets[user_data.id as _], user_data.id, submitter, squeue).unwrap();
-                    }
-
                     // Add the buffer back
                     let entry = opcode::ProvideBuffers::new(
                         buffer.as_ptr() as _,
@@ -181,6 +169,18 @@ unsafe fn handle_completions(
 
                     while squeue.push(&entry).is_err() {
                         submitter.submit().unwrap();
+                    }
+
+                    if c.result() <= 0 {
+                        // submit_close(&sockets[user_data.id as _], user_data.id, submitter, squeue).unwrap();
+                        let sock = sockets.remove(user_data.id as _);
+                        libc::close(sock.as_raw_fd());
+                    } else {
+                        submit_send(&sockets[user_data.id as _], user_data.id, submitter, squeue)
+                            .unwrap();
+
+                        // And submit another recv
+                        submit_recv(&sockets[user_data.id as _], user_data.id, submitter, squeue).unwrap();
                     }
                 }
             }
